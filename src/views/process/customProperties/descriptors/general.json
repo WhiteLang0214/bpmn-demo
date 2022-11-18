@@ -1,0 +1,47 @@
+{
+  "name": "abrain",
+  "prefix": "abrain",
+  "uri": "http://www.abrain.com.cn/",
+  "xml": {
+    "tagAlias": "lowerCase"
+  },
+  "associations": [],
+  "types": [
+    {
+      "name": "BewitchedStartEvent",
+      "extends": [
+        "bpmn:StartEvent"
+      ],
+      "properties": [
+        {
+          "name": "generalName",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "extFormUrl",
+          "isAttr": true,
+          "type": "String"
+        }
+      ]
+    },
+    {
+      "name": "dealType",
+      "extends": [
+        "bpmn:UserTask"
+      ],
+      "properties": [
+        {
+          "name": "user_type",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "generalName",
+          "isAttr": true,
+          "type": "String"
+        }
+      ]
+    }
+  ]
+}
