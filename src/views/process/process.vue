@@ -8,6 +8,7 @@
         <div id="container" style="height: 100%"></div>
       </el-col>
       <el-col :span="8">
+        名称：<el-input v-model="form.name" @change="updateName"></el-input>
         <div id="js-properties-panel" class="panel"></div>
       </el-col>
     </el-row>
@@ -15,8 +16,10 @@
 </template>
 
 <script setup name="demo1">
-import { onMounted, defineExpose, ref } from 'vue'
-import BpmnJS from 'bpmn-js/lib/Modeler'
+import { onMounted, defineExpose, ref, reactive } from 'vue'
+import Modeler from 'bpmn-js/lib/Modeler'
+// 自定义左侧工具栏
+import  CustomModeler from './palette/customModeler'
 import initDiagram from './diagram/initDiagram.bpmn'
 // 这里引入的是右侧属性栏这个框
 import {
@@ -35,18 +38,15 @@ import CamundaExtensionModule from 'camunda-bpmn-moddle/lib'
 import camundaModdleDescriptors from 'camunda-bpmn-moddle/resources/camunda'
 import customTranslate from "./translation/customTranslate";
 
-import MagicPropertiesProvider from './customProperties/provider/MagicPropertiesProvider'
-import dealTypePropertiesProvider from './customProperties/provider/deal_type'
 // 自定义描述
-import bpmnDescriptors from "./customProperties/descriptors/bpmn.json"
-import baseGeneralDescriptors from "./customProperties/descriptors/general.json"
+import baseGeneralDescriptors from "./descriptors/general.json"
 
 
 
 let bpmnModeler = null;
 const init = () => {
   const dom = document.getElementById("container");
-  bpmnModeler = new BpmnJS({
+  bpmnModeler = new CustomModeler({
     container: dom,
     //添加控制板
     propertiesPanel: {
@@ -57,22 +57,20 @@ const init = () => {
       // 控制属性栏
       BpmnPropertiesProviderModule,
       CamundaPlatformPropertiesProviderModule,
-      CloudElementTemplatesPropertiesProviderModule,
-      CloudElementTemplatesValidator,
-      ElementTemplatesPropertiesProviderModule,
-      ZeebeDescriptionProvider,
-      ZeebePropertiesProviderModule,
-      useService,
+      // CloudElementTemplatesPropertiesProviderModule,
+      // CloudElementTemplatesValidator,
+      // ElementTemplatesPropertiesProviderModule,
+      // ZeebeDescriptionProvider,
+      // ZeebePropertiesProviderModule,
+      // useService,
       // 汉化
-      customTranslate,
-      // CamundaExtensionModule,
-      MagicPropertiesProvider,
-      dealTypePropertiesProvider
+      customTranslateModule,
+      // MagicPropertiesProvider,
+      // dealTypePropertiesProvider
     ],
     moddleExtensions: {
       camunda: camundaModdleDescriptors,
-      // bpmnDescriptors,
-      self: baseGeneralDescriptors
+      self: baseGeneralDescriptors,
     }
   });
   // 让流程图自适应屏幕
@@ -116,7 +114,9 @@ const addModelerListener = () => {
       // 操作的图形 label 、Shape
       // console.log(shape)
       if (event === 'shape.added') {
-        // console.log('新增了shape')
+        console.log('新增了shape', shape);
+        // 存储当前新增的节点
+        sessionStorage.setItem("newShape", shape)
       } else if (event === 'shape.move.end') {
         // console.log('移动了shape')
       } else if (event === 'shape.removed') {
@@ -159,9 +159,19 @@ const exportFun = async () => {
   // console.log('export---', xml)
 }
 
+const form = reactive({
+  name: ""
+})
+const updateName = (e) => {
+  console.log(e);
+  bpmnModeler.up
+}
+
 
 defineExpose({
   exportFun,
+  updateName,
+  form
 })
 
 onMounted(() => {
@@ -171,6 +181,14 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* bpmn */
+@import '~bpmn-js/dist/assets/diagram-js.css';
+@import '~bpmn-js/dist/assets/bpmn-font/css/bpmn.css';
+@import '~bpmn-js/dist/assets/bpmn-font/css/bpmn-codes.css';
+@import '~bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css';
+/* 右边工具栏样式 */
+@import '~bpmn-js-properties-panel/dist/assets/properties-panel.css';
+
 .demo {
   height: 100vh;
 }
