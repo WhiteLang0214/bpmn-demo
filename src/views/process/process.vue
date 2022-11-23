@@ -8,7 +8,7 @@
         <div id="container" style="height: 100%"></div>
       </el-col>
       <el-col :span="8">
-        名称：<el-input v-model="form.name" @change="updateName"></el-input>
+        <!-- <div id="other-properties" class="panel"></div> -->
         <div id="js-properties-panel" class="panel"></div>
       </el-col>
     </el-row>
@@ -17,7 +17,7 @@
 
 <script setup name="demo1">
 import { onMounted, defineExpose, ref, reactive } from 'vue'
-import Modeler from 'bpmn-js/lib/Modeler'
+// import Modeler from 'bpmn-js/lib/Modeler'
 // 自定义左侧工具栏
 import  CustomModeler from './palette/customModeler'
 import initDiagram from './diagram/initDiagram.bpmn'
@@ -41,6 +41,11 @@ import customTranslate from "./translation/customTranslate";
 // 自定义描述
 import baseGeneralDescriptors from "./descriptors/general.json"
 
+// 自定义属性
+import FormGroupProvider from './provider/FormGroupProvider'
+import TimerListenerProvider from './provider/TimerListenerProvider'
+import TaskListenerProvider from './provider/TaskListenerProvider'
+
 
 
 let bpmnModeler = null;
@@ -56,7 +61,8 @@ const init = () => {
       BpmnPropertiesPanelModule,
       // 控制属性栏
       BpmnPropertiesProviderModule,
-      CamundaPlatformPropertiesProviderModule,
+      // CamundaPlatformPropertiesProviderModule,
+      // CamundaExtensionModule,
       // CloudElementTemplatesPropertiesProviderModule,
       // CloudElementTemplatesValidator,
       // ElementTemplatesPropertiesProviderModule,
@@ -65,8 +71,11 @@ const init = () => {
       // useService,
       // 汉化
       customTranslateModule,
-      // MagicPropertiesProvider,
-      // dealTypePropertiesProvider
+      // 自定义属性
+      // 表单组
+      FormGroupProvider,
+      // 任务监听器
+      TaskListenerProvider
     ],
     moddleExtensions: {
       camunda: camundaModdleDescriptors,
@@ -80,6 +89,10 @@ const init = () => {
   console.log('bpmnModeler---', bpmnModeler, canvas)
   // console.log("获取 BpmnPropertiesProviderModule：", bpmnModeler.get('eventBus'))
 
+  // const propertiesPanel = bpmnModeler.get('propertiesPanel');
+  // console.log('----propertiesPanel-----', propertiesPanel)
+  // propertiesPanel.attachTo('#other-properties');
+
   bpmnModeler.importXML(initDiagram).then(() => {
     addBpmnListener();
     addModelerListener();
@@ -92,7 +105,7 @@ const init = () => {
 // 监听图形变化时间
 const addBpmnListener = () => {
   bpmnModeler.on('commandStack.changed', e => {
-    // console.log(e)
+    console.log('commandStack.changed-----',e)
     // that.saveSVG(function(err, svg) {
     //     that.setEncoded(downloadSvgLink, 'diagram.svg', err ? null : svg)
     // })
@@ -154,24 +167,13 @@ const customTranslateModule = {
 }
 
 const exportFun = async () => {
-  // const { xml } = await bpmnModeler.saveXML({ format: true })
+  const { xml } = await bpmnModeler.saveXML({ format: true })
   // 每次操作流程图都会更新数据
-  // console.log('export---', xml)
+  console.log('export---', xml)
 }
-
-const form = reactive({
-  name: ""
-})
-const updateName = (e) => {
-  console.log(e);
-  bpmnModeler.up
-}
-
 
 defineExpose({
   exportFun,
-  updateName,
-  form
 })
 
 onMounted(() => {
