@@ -43,8 +43,8 @@ import baseGeneralDescriptors from "./descriptors/general.json"
 
 // 自定义属性
 import FormGroupProvider from './provider/FormGroupProvider'
-import TimerListenerProvider from './provider/TimerListenerProvider'
 import TaskListenerProvider from './provider/TaskListenerProvider'
+import ExecutionListenerProvider from './provider/ExecutionListenerProvider'
 
 
 
@@ -75,7 +75,9 @@ const init = () => {
       // 表单组
       FormGroupProvider,
       // 任务监听器
-      TaskListenerProvider
+      TaskListenerProvider,
+      // 执行监听器
+      ExecutionListenerProvider
     ],
     moddleExtensions: {
       camunda: camundaModdleDescriptors,

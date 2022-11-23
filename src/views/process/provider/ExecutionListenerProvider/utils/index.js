@@ -1,14 +1,33 @@
-import { useService } from 'bpmn-js-properties-panel'
-import { is, getBusinessObject } from 'bpmn-js/lib/util/ModelUtil'
+
+import { is, getBusinessObject } from 'bpmn-js/lib/util/ModelUtil.js';
 const ModelingUtil = require('bpmn-js/lib/features/modeling/util/ModelingUtil');
 const minDash = require('min-dash');
 const propertiesPanel = require('@bpmn-io/properties-panel');
 const jsxRuntime = require('@bpmn-io/properties-panel/preact/jsx-runtime');
+import { useService } from 'bpmn-js-properties-panel'
 
-const DEFAULT_PROPS$2 = {
-  'stringValue': undefined,
-  'string': undefined,
-  'expression': undefined
+const EVENT_TO_LABEL = {
+  start: 'Start',
+  end: 'End',
+  take: 'Take',
+  create: 'Create',
+  assignment: 'Assignment',
+  complete: 'Complete',
+  delete: 'Delete',
+  update: 'Update',
+  timeout: 'Timeout'
+};
+
+const IMPLEMENTATION_TYPE_TO_LABEL = {
+  class: 'Java class',
+  expression: 'Expression',
+  delegateExpression: 'Delegate expression',
+  script: 'Script'
+};
+
+const DEFAULT_EVENT_PROPS = {
+  'eventDefinitions': undefined,
+  'event': undefined
 };
 
 const SCRIPT_PROPS = {
@@ -31,29 +50,12 @@ const DEFAULT_PROPS = { ...SCRIPT_PROPS,
   ...DELEGATE_EXPRESSION_PROPS
 };
 
-const DEFAULT_EVENT_PROPS = {
-  'eventDefinitions': undefined,
-  'event': undefined
+const DEFAULT_PROPS$2 = {
+  'stringValue': undefined,
+  'string': undefined,
+  'expression': undefined
 };
 
-const IMPLEMENTATION_TYPE_TO_LABEL = {
-  class: 'Java class',
-  expression: 'Expression',
-  delegateExpression: 'Delegate expression',
-  script: 'Script'
-};
-
-const EVENT_TO_LABEL = {
-  start: 'Start',
-  end: 'End',
-  take: 'Take',
-  create: 'Create',
-  assignment: 'Assignment',
-  complete: 'Complete',
-  delete: 'Delete',
-  update: 'Update',
-  timeout: 'Timeout'
-};
 
 /**
  * Create a new element and set its parent.
@@ -74,21 +76,6 @@ const EVENT_TO_LABEL = {
   }
 
   return element;
-}
-
-function getDefaultEventTypeProperties(type, bpmnFactory) {
-  switch (type) {
-    case 'timeout':
-      return { ...DEFAULT_EVENT_PROPS,
-        eventDefinitions: [bpmnFactory.create('bpmn:TimerEventDefinition')],
-        event: type
-      };
-
-    default:
-      return { ...DEFAULT_EVENT_PROPS,
-        event: type
-      };
-  }
 }
 
 function getListenerType(listener) {
@@ -209,7 +196,7 @@ function getListenerBusinessObject(businessObject) {
  * @return {boolean} a boolean value
  */
 
-function isDmnCapable(element) {
+ function isDmnCapable(element) {
   return is(element, 'camunda:DmnCapable');
 }
 
@@ -253,6 +240,122 @@ function getEventDefinition$1(element, eventType) {
   });
 }
 
+function EventType({
+  id,
+  element,
+  listener
+}) {
+  const translate = useService('translate');
+  const bpmnFactory = useService('bpmnFactory');
+  const commandStack = useService('commandStack');
+
+  function getValue() {
+    return listener.get('event');
+  }
+
+  function setValue(value) {
+    const properties = getDefaultEventTypeProperties(value, bpmnFactory);
+    commandStack.execute('element.updateModdleProperties', {
+      element,
+      moddleElement: listener,
+      properties
+    });
+  }
+
+  function getOptions() {
+    if (is(listener, 'camunda:TaskListener')) {
+      return [{
+        value: 'create',
+        label: translate('create')
+      }, {
+        value: 'assignment',
+        label: translate('assignment')
+      }, {
+        value: 'complete',
+        label: translate('complete')
+      }, {
+        value: 'delete',
+        label: translate('delete')
+      }, {
+        value: 'update',
+        label: translate('update')
+      }, {
+        value: 'timeout',
+        label: translate('timeout')
+      }];
+    }
+
+    if (is(element, 'bpmn:SequenceFlow')) {
+      return [{
+        value: 'take',
+        label: translate('take')
+      }];
+    }
+
+    return [{
+      value: 'start',
+      label: translate('start')
+    }, {
+      value: 'end',
+      label: translate('end')
+    }];
+  }
+
+  return jsxRuntime.jsx(propertiesPanel.SelectEntry, {
+    id: id,
+    label: translate('Event type'),
+    getValue: getValue,
+    setValue: setValue,
+    getOptions: getOptions
+  });
+}
+
+function getDefaultEventTypeProperties(type, bpmnFactory) {
+  switch (type) {
+    case 'timeout':
+      return { ...DEFAULT_EVENT_PROPS,
+        eventDefinitions: [bpmnFactory.create('bpmn:TimerEventDefinition')],
+        event: type
+      };
+
+    default:
+      return { ...DEFAULT_EVENT_PROPS,
+        event: type
+      };
+  }
+}
+
+function ListenerType({
+  id,
+  element,
+  listener
+}) {
+  const modeling = useService('modeling');
+  const translate = useService('translate');
+  const bpmnFactory = useService('bpmnFactory');
+
+  function getValue() {
+    return getListenerType(listener);
+  }
+
+  function setValue(value) {
+    const properties = getDefaultImplementationProperties(value, bpmnFactory);
+    modeling.updateModdleProperties(element, listener, properties);
+  }
+
+  function getOptions() {
+    return getListenerTypeOptions(translate);
+  }
+
+  return jsxRuntime.jsx(propertiesPanel.SelectEntry, {
+    id: id,
+    label: translate('Listener type'),
+    getValue: getValue,
+    setValue: setValue,
+    getOptions: getOptions
+  });
+}
+
 function getDefaultImplementationProperties(type, bpmnFactory) {
   switch (type) {
     case 'class':
@@ -282,6 +385,41 @@ function getListenerTypeOptions(translate) {
     value,
     label: translate(label)
   }));
+}
+
+function ImplementationDetails(props) {
+  const {
+    idPrefix,
+    element,
+    listener
+  } = props;
+  const type = getListenerType(listener);
+
+  if (type === 'class') {
+    return [{
+      id: getPrefixedId(idPrefix, 'javaClass'),
+      component: JavaClass,
+      businessObject: listener
+    }];
+  } else if (type === 'expression') {
+    return [{
+      id: getPrefixedId(idPrefix, 'expression'),
+      component: Expression$1,
+      businessObject: listener
+    }];
+  } else if (type === 'delegateExpression') {
+    return [{
+      id: getPrefixedId(idPrefix, 'delegateExpression'),
+      component: DelegateExpression,
+      businessObject: listener
+    }];
+  } else if (type === 'script') {
+    return ScriptProps({
+      element,
+      script: listener.get('script'),
+      prefix: idPrefix
+    });
+  }
 }
 
 function getPrefixedId(prefix, id) {
@@ -389,10 +527,6 @@ function DelegateExpression(props) {
     debounce
   });
 }
-
-/**
- * Cf. https://docs.camunda.org/manual/latest/user-guide/process-engine/scripting/
- */
 
 function ScriptProps(props) {
   const {
@@ -622,310 +756,84 @@ function getScriptValue(businessObject) {
   return businessObject.get(getScriptProperty(businessObject));
 }
 
-function getScriptProperty(businessObject) {
-  return isScript$2(businessObject) ? 'value' : 'script';
-}
-
 function isScript$2(element) {
   return is(element, 'camunda:Script');
 }
 
-function TimerProps$2(props) {
+function getScriptProperty(businessObject) {
+  return isScript$2(businessObject) ? 'value' : 'script';
+}
+
+function Fields(props) {
   const {
+    id,
     element,
-    listener,
-    idPrefix
+    listener
   } = props;
-  let {
-    timerEventDefinition
-  } = props;
+  const bpmnFactory = useService('bpmnFactory');
+  const commandStack = useService('commandStack');
+  const translate = useService('translate');
+  const fields = listener.get('fields');
 
-  if (!timerEventDefinition) {
-    const businessObject = getBusinessObject(element);
-    timerEventDefinition = getTimerEventDefinition(businessObject);
-  }
-
-  const timerEventDefinitionType = getTimerDefinitionType(timerEventDefinition); // (1) Only show for supported elements
-
-  if (!isTimerSupported(element) && !isTimerSupportedOnListener$1(listener)) {
-    return [];
-  } // (2) Provide entries, have a value only if selection was made
-
-
-  const entries = [];
-  entries.push({
-    id: getId$1(idPrefix, 'timerEventDefinitionType'),
-    component: TimerEventDefinitionType$2,
-    isEdited: propertiesPanel.isSelectEntryEdited,
-    timerEventDefinition,
-    timerEventDefinitionType
-  });
-
-  if (timerEventDefinitionType) {
-    entries.push({
-      id: getId$1(idPrefix, 'timerEventDefinitionValue'),
-      component: TimerEventDefinitionValue$2,
-      isEdited: propertiesPanel.isTextFieldEntryEdited,
-      timerEventDefinition,
-      timerEventDefinitionType
-    });
-  }
-
-  return entries;
-}
-
-function getEventDefinition(element, eventType) {
-  const businessObject = getBusinessObject(element);
-  const eventDefinitions = businessObject.get('eventDefinitions') || [];
-  return minDash.find(eventDefinitions, function (definition) {
-    return is(definition, eventType);
-  });
-}
-
-function getTimerEventDefinition(element) {
-  return getEventDefinition(element, 'bpmn:TimerEventDefinition');
-}
-
-/**
- * Get the timer definition type for a given timer event definition.
- *
- * @param {ModdleElement<bpmn:TimerEventDefinition>} timer
- *
- * @return {string|undefined} the timer definition type
- */
-
- function getTimerDefinitionType(timer) {
-  if (!timer) {
-    return;
-  }
-
-  const timeDate = timer.get('timeDate');
-
-  if (typeof timeDate !== 'undefined') {
-    return 'timeDate';
-  }
-
-  const timeCycle = timer.get('timeCycle');
-
-  if (typeof timeCycle !== 'undefined') {
-    return 'timeCycle';
-  }
-
-  const timeDuration = timer.get('timeDuration');
-
-  if (typeof timeDuration !== 'undefined') {
-    return 'timeDuration';
-  }
-}
-
-function isTimerSupported(element) {
-  return ModelingUtil.isAny(element, ['bpmn:StartEvent', 'bpmn:IntermediateCatchEvent', 'bpmn:BoundaryEvent']) && !!getTimerEventDefinition(element);
-}
-
-function isTimerSupportedOnListener$1(listener) {
-  return listener && is(listener, 'camunda:TaskListener') && getTimerEventDefinition(listener);
-}
-
-function getId$1(idPrefix, id) {
-  return idPrefix ? idPrefix + id : id;
-}
-
-/**
- * TimerEventDefinitionType - Generic select entry allowing to select a specific
- * timerEventDefintionType. To be used together with timerEventDefinitionValue.
- *
- * @param  {type} props
- * @return {SelectEntry}
- */
-
- function TimerEventDefinitionType$2(props) {
-  const {
-    element,
-    timerEventDefinition,
-    timerEventDefinitionType
-  } = props;
-  const commandStack = useService('commandStack'),
-        bpmnFactory = useService('bpmnFactory'),
-        translate = useService('translate');
-
-  const getValue = () => {
-    return timerEventDefinitionType || '';
-  };
-
-  const setValue = value => {
-    // (1) Check if value is different to current type
-    if (value === timerEventDefinitionType) {
-      return;
-    } // (2) Create empty formalExpression element
-
-
-    const formalExpression = bpmnFactory.create('bpmn:FormalExpression', {
-      body: undefined
-    });
-    formalExpression.$parent = timerEventDefinition; // (3) Set the value for selected timerEventDefinitionType
-
-    const newProps = {
-      timeDuration: undefined,
-      timeDate: undefined,
-      timeCycle: undefined
-    };
-
-    if (value !== '') {
-      newProps[value] = formalExpression;
-    } // (4) Execute businessObject update
-
-
+  function addField() {
+    const field = createElement('camunda:Field', {}, listener, bpmnFactory);
     commandStack.execute('element.updateModdleProperties', {
       element,
-      moddleElement: timerEventDefinition,
-      properties: newProps
-    });
-  };
-
-  const getOptions = element => {
-    return [{
-      value: '',
-      label: translate('<none>')
-    }, {
-      value: 'timeDate',
-      label: translate('Date')
-    }, {
-      value: 'timeDuration',
-      label: translate('Duration')
-    }, {
-      value: 'timeCycle',
-      label: translate('Cycle')
-    }];
-  };
-
-  return propertiesPanel.SelectEntry({
-    element,
-    id: 'timerEventDefinitionType',
-    label: translate('Type'),
-    getValue,
-    setValue,
-    getOptions
-  });
-}
-
-/**
- * TimerEventDefinitionValue - Generic textField entry allowing to specify the
- * timerEventDefintionValue based on the set timerEventDefintionType. To be used
- * together with timerEventDefinitionType.
- *
- * @param  {type} props
- * @return {TextFieldEntry}
- */
-
-
- function TimerEventDefinitionValue$2(props) {
-  const {
-    element,
-    timerEventDefinition,
-    timerEventDefinitionType
-  } = props;
-  const commandStack = useService('commandStack'),
-        translate = useService('translate'),
-        debounce = useService('debounceInput');
-  const timerEventFormalExpression = timerEventDefinition.get(timerEventDefinitionType);
-
-  const getValue = () => {
-    return timerEventFormalExpression && timerEventFormalExpression.get('body');
-  };
-
-  const setValue = value => {
-    commandStack.execute('element.updateModdleProperties', {
-      element,
-      moddleElement: timerEventFormalExpression,
+      moddleElement: listener,
       properties: {
-        body: value
+        fields: [...listener.get('fields'), field]
       }
     });
-  };
+  }
 
-  return propertiesPanel.TextFieldEntry({
-    element,
-    id: 'timerEventDefinitionValue',
-    label: translate('Value'),
-    getValue,
-    setValue,
-    debounce,
-    description: getTimerEventDefinitionValueDescription$2(timerEventDefinitionType, translate)
+  function removeField(field) {
+    commandStack.execute('element.updateModdleProperties', {
+      element,
+      moddleElement: listener,
+      properties: {
+        fields: minDash.without(listener.get('fields'), field)
+      }
+    });
+  }
+
+  return jsxRuntime.jsx(propertiesPanel.ListEntry, {
+    id: id,
+    element: element,
+    label: translate('Field injection'),
+    items: fields,
+    component: Field,
+    onAdd: addField,
+    onRemove: removeField,
+    compareFn: compareName,
+    autoFocusEntry: true
   });
 }
 
-function getTimerEventDefinitionValueDescription$2(timerDefinitionType, translate) {
-  switch (timerDefinitionType) {
-    case 'timeDate':
-      return jsxRuntime.jsxs("div", {
-        children: [jsxRuntime.jsx("p", {
-          children: translate('A specific point in time defined as ISO 8601 combined date and time representation.')
-        }), jsxRuntime.jsxs("ul", {
-          children: [jsxRuntime.jsxs("li", {
-            children: [jsxRuntime.jsx("code", {
-              children: "2019-10-01T12:00:00Z"
-            }), " - ", translate('UTC time')]
-          }), jsxRuntime.jsxs("li", {
-            children: [jsxRuntime.jsx("code", {
-              children: "2019-10-02T08:09:40+02:00"
-            }), " - ", translate('UTC plus 2 hours zone offset')]
-          })]
-        }), jsxRuntime.jsx("a", {
-          href: "https://docs.camunda.org/manual/latest/reference/bpmn20/events/timer-events/#time-date",
-          target: "_blank",
-          rel: "noopener",
-          children: translate('Documentation: Timer events')
-        })]
-      });
+function Field(props) {
+  const {
+    element,
+    id: idPrefix,
+    index,
+    item: field,
+    open
+  } = props;
+  const fieldId = `${idPrefix}-field-${index}`;
+  return jsxRuntime.jsx(propertiesPanel.CollapsibleEntry, {
+    id: fieldId,
+    element: element,
+    entries: FieldInjection({
+      element,
+      field,
+      idPrefix: fieldId
+    }),
+    label: field.get('name') || '<empty>',
+    open: open
+  });
+}
 
-    case 'timeCycle':
-      return jsxRuntime.jsxs("div", {
-        children: [jsxRuntime.jsx("p", {
-          children: translate('A cycle defined as ISO 8601 repeating intervals format.')
-        }), jsxRuntime.jsxs("ul", {
-          children: [jsxRuntime.jsxs("li", {
-            children: [jsxRuntime.jsx("code", {
-              children: "R5/PT10S"
-            }), " - ", translate('every 10 seconds, up to 5 times')]
-          }), jsxRuntime.jsxs("li", {
-            children: [jsxRuntime.jsx("code", {
-              children: "R/P1D"
-            }), " - ", translate('every day, infinitely')]
-          })]
-        }), jsxRuntime.jsx("a", {
-          href: "https://docs.camunda.org/manual/latest/reference/bpmn20/events/timer-events/#time-cycle",
-          target: "_blank",
-          rel: "noopener",
-          children: translate('Documentation: Timer events')
-        })]
-      });
-
-    case 'timeDuration':
-      return jsxRuntime.jsxs("div", {
-        children: [jsxRuntime.jsx("p", {
-          children: translate('A time duration defined as ISO 8601 durations format.')
-        }), jsxRuntime.jsxs("ul", {
-          children: [jsxRuntime.jsxs("li", {
-            children: [jsxRuntime.jsx("code", {
-              children: "PT15S"
-            }), " - ", translate('15 seconds')]
-          }), jsxRuntime.jsxs("li", {
-            children: [jsxRuntime.jsx("code", {
-              children: "PT1H30M"
-            }), " - ", translate('1 hour and 30 minutes')]
-          }), jsxRuntime.jsxs("li", {
-            children: [jsxRuntime.jsx("code", {
-              children: "P14D"
-            }), " - ", translate('14 days')]
-          })]
-        }), jsxRuntime.jsx("a", {
-          href: "https://docs.camunda.org/manual/latest/reference/bpmn20/events/timer-events/#time-duration",
-          target: "_blank",
-          rel: "noopener",
-          children: translate('Documentation: Timer events')
-        })]
-      });
-  }
+function compareName(field, anotherField) {
+  const [name = '', anotherName = ''] = [field.name, anotherField.name];
+  return name === anotherName ? 0 : name > anotherName ? 1 : -1;
 }
 
 function FieldInjection(props) {
@@ -1086,10 +994,6 @@ function ValueProperty(props) {
   return 'string' in field && 'string' || 'expression' in field && 'expression' || 'stringValue' in field && 'string' || 'string';
 }
 
-function getTimerEventDefinition$1(element) {
-  return getEventDefinition$1(element, 'bpmn:TimerEventDefinition');
-}
-
 /**
  * Remove one or more extension elements. Remove bpmn:ExtensionElements afterwards if it's empty.
  *
@@ -1099,7 +1003,7 @@ function getTimerEventDefinition$1(element) {
  * @param {CommandStack} commandStack
  */
 
-function removeExtensionElements(element, businessObject, extensionElementsToRemove, commandStack) {
+ function removeExtensionElements(element, businessObject, extensionElementsToRemove, commandStack) {
   if (!minDash.isArray(extensionElementsToRemove)) {
     extensionElementsToRemove = [extensionElementsToRemove];
   }
@@ -1115,6 +1019,28 @@ function removeExtensionElements(element, businessObject, extensionElementsToRem
   });
 }
 
+function addListenerFactory({
+  bpmnFactory,
+  commandStack,
+  element,
+  listenerGroup
+}) {
+  return function (event) {
+    event.stopPropagation();
+    const listener = bpmnFactory.create(listenerGroup, {
+      event: getDefaultEvent(element, listenerGroup),
+      class: ''
+    });
+    const businessObject = getListenersContainer(element);
+    addExtensionElements(element, businessObject, listener, bpmnFactory, commandStack);
+  };
+}
+
+function getDefaultEvent(element, listenerGroup) {
+  if (listenerGroup === 'camunda:TaskListener') return 'create';
+  return is(element, 'bpmn:SequenceFlow') ? 'take' : 'start';
+}
+
 /**
  * Add one or more extension elements. Create bpmn:ExtensionElements if it doesn't exist.
  *
@@ -1124,7 +1050,7 @@ function removeExtensionElements(element, businessObject, extensionElementsToRem
  * @param {CommandStack} commandStack
  */
 
-function addExtensionElements(element, businessObject, extensionElementToAdd, bpmnFactory, commandStack) {
+ function addExtensionElements(element, businessObject, extensionElementToAdd, bpmnFactory, commandStack) {
   const commands = [];
   let extensionElements = businessObject.get('extensionElements'); // (1) create bpmn:ExtensionElements if it doesn't exist
 
@@ -1157,20 +1083,6 @@ function addExtensionElements(element, businessObject, extensionElementToAdd, bp
     }
   });
   commandStack.execute('properties-panel.multi-command-executor', commands);
-}
-
-function getDefaultEvent(element, listenerGroup) {
-  if (listenerGroup === 'camunda:TaskListener') return 'create';
-  return is(element, 'bpmn:SequenceFlow') ? 'take' : 'start';
-}
-
-function compareName(field, anotherField) {
-  const [name = '', anotherName = ''] = [field.name, anotherField.name];
-  return name === anotherName ? 0 : name > anotherName ? 1 : -1;
-}
-
-export function getErrorEventDefinition(element) {
-  return getEventDefinition$1(element, 'bpmn:ErrorEventDefinition');
 }
 
 export function getListenersContainer(element) {
@@ -1220,287 +1132,29 @@ export function getListenerLabel(listener, translate = value => value) {
   return `${translate(EVENT_TO_LABEL[event])}: ${translate(IMPLEMENTATION_TYPE_TO_LABEL[implementationType])}`;
 }
 
-export function EventType({
-  id,
-  element,
-  listener
-}) {
-  const translate = useService('translate');
-  const bpmnFactory = useService('bpmnFactory');
-  const commandStack = useService('commandStack');
-
-  function getValue() {
-    return listener.get('event');
-  }
-
-  function setValue(value) {
-    const properties = getDefaultEventTypeProperties(value, bpmnFactory);
-    commandStack.execute('element.updateModdleProperties', {
-      element,
-      moddleElement: listener,
-      properties
-    });
-  }
-
-  function getOptions() {
-    if (is(listener, 'camunda:TaskListener')) {
-      return [{
-        value: 'create',
-        label: translate('create')
-      }, {
-        value: 'assignment',
-        label: translate('assignment')
-      }, {
-        value: 'complete',
-        label: translate('complete')
-      }, {
-        value: 'delete',
-        label: translate('delete')
-      }, {
-        value: 'update',
-        label: translate('update')
-      }, {
-        value: 'timeout',
-        label: translate('timeout')
-      }];
-    }
-
-    if (is(element, 'bpmn:SequenceFlow')) {
-      return [{
-        value: 'take',
-        label: translate('take')
-      }];
-    }
-
-    return [{
-      value: 'start',
-      label: translate('start')
-    }, {
-      value: 'end',
-      label: translate('end')
-    }];
-  }
-
-  return jsxRuntime.jsx(propertiesPanel.SelectEntry, {
-    id: id,
-    label: translate('Event type'),
-    getValue: getValue,
-    setValue: setValue,
-    getOptions: getOptions
-  });
-}
-
-export function ListenerId({
-  id,
-  element,
-  listener
-}) {
-  const translate = useService('translate');
-  const debounce = useService('debounceInput');
-  const commandStack = useService('commandStack');
-  let options = {
-    element,
-    id: id,
-    label: translate('Listener ID'),
-    debounce,
-    isEdited: propertiesPanel.isTextFieldEntryEdited,
-    setValue: value => {
-      commandStack.execute('element.updateModdleProperties', {
-        element,
-        moddleElement: listener,
-        properties: {
-          'camunda:id': value
-        }
-      });
-    },
-    getValue: () => {
-      return listener.get('camunda:id');
-    }
-  };
-  return propertiesPanel.TextFieldEntry(options);
-}
-
-export function ListenerType({
-  id,
-  element,
-  listener
-}) {
-  const modeling = useService('modeling');
-  const translate = useService('translate');
-  const bpmnFactory = useService('bpmnFactory');
-
-  function getValue() {
-    return getListenerType(listener);
-  }
-
-  function setValue(value) {
-    const properties = getDefaultImplementationProperties(value, bpmnFactory);
-    modeling.updateModdleProperties(element, listener, properties);
-  }
-
-  function getOptions() {
-    return getListenerTypeOptions(translate);
-  }
-
-  return jsxRuntime.jsx(propertiesPanel.SelectEntry, {
-    id: id,
-    label: translate('Listener type'),
-    getValue: getValue,
-    setValue: setValue,
-    getOptions: getOptions
-  });
-}
-
-export function ImplementationDetails(props) {
+export function ExecutionListener(props) {
   const {
     idPrefix,
     element,
     listener
   } = props;
-  const type = getListenerType(listener);
-
-  if (type === 'class') {
-    return [{
-      id: getPrefixedId(idPrefix, 'javaClass'),
-      component: JavaClass,
-      businessObject: listener
-    }];
-  } else if (type === 'expression') {
-    return [{
-      id: getPrefixedId(idPrefix, 'expression'),
-      component: Expression$1,
-      businessObject: listener
-    }];
-  } else if (type === 'delegateExpression') {
-    return [{
-      id: getPrefixedId(idPrefix, 'delegateExpression'),
-      component: DelegateExpression,
-      businessObject: listener
-    }];
-  } else if (type === 'script') {
-    return ScriptProps({
-      element,
-      script: listener.get('script'),
-      prefix: idPrefix
-    });
-  }
-}
-
-export function EventTypeDetails(props) {
-  const {
+  return [{
+    id: `${idPrefix}-eventType`,
+    component: EventType,
+    listener
+  }, {
+    id: `${idPrefix}-listenerType`,
+    component: ListenerType,
+    listener
+  }, ...ImplementationDetails({
     idPrefix,
     element,
     listener
-  } = props;
-  const type = listener.get('event');
-
-  if (type === 'timeout') {
-    return TimerProps$2({
-      element,
-      listener,
-      timerEventDefinition: getTimerEventDefinition$1(listener),
-      idPrefix: idPrefix
-    });
-  }
-
-  return [];
-}
-
-export function Field(props) {
-  const {
-    element,
-    id: idPrefix,
-    index,
-    item: field,
-    open
-  } = props;
-  const fieldId = `${idPrefix}-field-${index}`;
-  return jsxRuntime.jsx(propertiesPanel.CollapsibleEntry, {
-    id: fieldId,
-    element: element,
-    entries: FieldInjection({
-      element,
-      field,
-      idPrefix: fieldId
-    }),
-    label: field.get('name') || '<empty>',
-    open: open
-  });
-}
-
-export function Fields(props) {
-  const {
-    id,
-    element,
+  }), {
+    id: `${idPrefix}-fields`,
+    component: Fields,
     listener
-  } = props;
-  const bpmnFactory = useService('bpmnFactory');
-  const commandStack = useService('commandStack');
-  const translate = useService('translate');
-  const fields = listener.get('fields');
-
-  function addField() {
-    const field = createElement('camunda:Field', {}, listener, bpmnFactory);
-    commandStack.execute('element.updateModdleProperties', {
-      element,
-      moddleElement: listener,
-      properties: {
-        fields: [...listener.get('fields'), field]
-      }
-    });
-  }
-
-  function removeField(field) {
-    commandStack.execute('element.updateModdleProperties', {
-      element,
-      moddleElement: listener,
-      properties: {
-        fields: minDash.without(listener.get('fields'), field)
-      }
-    });
-  }
-
-  return jsxRuntime.jsx(propertiesPanel.ListEntry, {
-    id: id,
-    element: element,
-    label: translate('Field injection'),
-    items: fields,
-    component: Field,
-    onAdd: addField,
-    onRemove: removeField,
-    compareFn: compareName,
-    autoFocusEntry: true
-  });
-}
-
-export function addListenerFactory({
-  bpmnFactory,
-  commandStack,
-  element,
-  listenerGroup
-}) {
-  return function (event) {
-    console.log("addListenerFactory-----", event)
-    event.stopPropagation();
-    const listener = bpmnFactory.create(listenerGroup, {
-      event: getDefaultEvent(element, listenerGroup),
-      class: ''
-    });
-    const businessObject = getListenersContainer(element);
-    addExtensionElements(element, businessObject, listener, bpmnFactory, commandStack);
-  };
-}
-
-export function addTaskListenerFactory(props) {
-  return addListenerFactory({ ...props,
-    listenerGroup: 'camunda:TaskListener'
-  });
-}
-
-export function addExecutionListenerFactory(props) {
-  return addListenerFactory({ ...props,
-    listenerGroup: 'camunda:ExecutionListener'
-  });
+  }];
 }
 
 export function removeListenerFactory({
@@ -1512,4 +1166,10 @@ export function removeListenerFactory({
     event.stopPropagation();
     removeExtensionElements(element, getListenersContainer(element), listener, commandStack);
   };
+}
+
+export function addExecutionListenerFactory(props) {
+  return addListenerFactory({ ...props,
+    listenerGroup: 'camunda:ExecutionListener'
+  });
 }

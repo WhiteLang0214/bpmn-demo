@@ -1,37 +1,50 @@
+/*
+ * @file name: 执行监听器
+ * @Descripttion: 
+ * @version: 
+ * @Author: langxue
+ * @Date: 2022-11-23 14:37:55
+ * @LastEditors: langxue
+ * @LastEditTime: 2022-11-23 15:20:47
+ */
 const propertiesPanel = require('@bpmn-io/properties-panel');
+// const ModelingUtil = require('bpmn-js/lib/features/modeling/util/ModelingUtil');
 import { is } from 'bpmn-js/lib/util/ModelUtil'
-import { 
+
+import {
   getListenersContainer,
   getExtensionElementsList,
   getListenerLabel,
-  EventType,
-  ListenerId,
-  ListenerType,
-  ImplementationDetails,
-  EventTypeDetails,
-  Fields,
-  addTaskListenerFactory,
-  removeListenerFactory } from './utils'
+  ExecutionListener,
+  removeListenerFactory,
+  addExecutionListenerFactory } from './utils'
 
 const LOW_PRIORITY = 500;
 const CAMUNDA_PLATFORM_GROUPS = [
-  TaskListenerGroup
+  ExecutionListenerGroup
 ];
 
-// 创建 任务监听器 显示的属性列表
-function TaskListenerGroup(element, injector) {
+const LISTENER_ALLOWED_TYPES = [
+  // 'bpmn:Activity',
+  // 'bpmn:Event',
+  // 'bpmn:Gateway',
+  // 'bpmn:SequenceFlow',
+  // 'bpmn:Process',
+  // 'bpmn:Participant'
+  'bpmn:UserTask'
+];
+
+function ExecutionListenerGroup(element, injector) {
   const translate = injector.get('translate');
   const group = {
-    label: translate('任务监听器'),
-    id: 'CamundaPlatform__TaskListener',
+    label: translate('Execution listeners'),
+    id: 'CamundaPlatform__ExecutionListener',
     component: propertiesPanel.ListGroup,
-    ...TaskListenerProps({
+    ...ExecutionListenerProps({
       element,
       injector
     })
   };
-
-  console.log("任务监听器---", group)
 
   if (group.items) {
     return group;
@@ -40,62 +53,37 @@ function TaskListenerGroup(element, injector) {
   return null;
 }
 
-function TaskListener(props) {
-  const {
-    idPrefix,
-    element,
-    listener
-  } = props;
-  return [{
-    id: `${idPrefix}-eventType`,
-    component: EventType,
-    listener
-  }, {
-    id: `${idPrefix}-listenerId`,
-    component: ListenerId,
-    listener
-  }, {
-    id: `${idPrefix}-listenerType`,
-    component: ListenerType,
-    listener
-  }, ...ImplementationDetails({
-    idPrefix,
-    element,
-    listener
-  }), ...EventTypeDetails({
-    idPrefix,
-    element,
-    listener
-  }), {
-    id: `${idPrefix}-fields`,
-    component: Fields,
-    listener
-  }];
-}
-
-// 任务监听器的属性
-function TaskListenerProps({
+function ExecutionListenerProps({
   element,
   injector
 }) {
-  // 只给 UserTask 节点开通该属性
+  // 原来的代码 先注释
+  // if (!ModelingUtil.isAny(element, LISTENER_ALLOWED_TYPES)) {
+  //   return;
+  // }
+
+  const bpmnFactory = injector.get('bpmnFactory'),
+        commandStack = injector.get('commandStack');
+
+  // if (ModelUtil.is(element, 'bpmn:Participant') && !element.businessObject.processRef) {
+  //   return;
+  // }
+
+  // 改造的代码 只对 UserTask 节点开放
   if (!is(element, 'bpmn:UserTask')) {
     return;
   }
 
-  const bpmnFactory = injector.get('bpmnFactory'),
-        commandStack = injector.get('commandStack');
   const businessObject = getListenersContainer(element);
-  const listeners = getExtensionElementsList(businessObject, 'camunda:TaskListener');
- 
+  const listeners = getExtensionElementsList(businessObject, 'camunda:ExecutionListener');
   return {
     items: listeners.map((listener, index) => {
-      const id = `${element.id}-taskListener-${index}`; // @TODO(barmac): Find a way to pass translate for internationalized label.
+      const id = `${element.id}-executionListener-${index}`; // @TODO(barmac): Find a way to pass translate for internationalized label.
 
       return {
         id,
         label: getListenerLabel(listener),
-        entries: TaskListener({
+        entries: ExecutionListener({
           idPrefix: id,
           element,
           listener
@@ -107,8 +95,7 @@ function TaskListenerProps({
         })
       };
     }),
-    // 创建添加按钮 并且绑定事件
-    add: addTaskListenerFactory({
+    add: addExecutionListenerFactory({
       bpmnFactory,
       commandStack,
       element
@@ -116,7 +103,7 @@ function TaskListenerProps({
   };
 }
 
-class TaskListenerProvider {
+export default class ExecutionListenerProvider {
   constructor(propertiesPanel, injector) {
     propertiesPanel.registerProvider(LOW_PRIORITY, this);
     this._injector = injector;
@@ -145,8 +132,6 @@ class TaskListenerProvider {
 
     return groups.filter(group => group !== null);
   }
-
 }
-TaskListenerProvider.$inject = [ 'propertiesPanel', 'injector'];
 
-export default TaskListenerProvider
+ExecutionListenerProvider.$inject = [ 'propertiesPanel', 'injector'];
