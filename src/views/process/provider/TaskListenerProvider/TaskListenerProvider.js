@@ -31,8 +31,6 @@ function TaskListenerGroup(element, injector) {
     })
   };
 
-  console.log("任务监听器---", group)
-
   if (group.items) {
     return group;
   }
