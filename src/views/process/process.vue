@@ -1,14 +1,16 @@
 <template>
   <div class="demo">
     <section>
-      <el-button type="primary" @click="exportFun">导出</el-button>
+      <el-button :type="index == 0 ? 'primary' : 'default'" @click="normalFun">普通模式</el-button>
+      <el-button :type="index == 1 ? 'primary' : 'default'" @click="advancedFun">高级模式</el-button>
+      <el-button type="primary" @click="exportFun">导出xml</el-button>
     </section>
+    <h1>当前为：{{ index == 0 ? '普通模式': '高级模式'}}</h1>
     <el-row>
       <el-col :span="16">
         <div id="container" style="height: 100%"></div>
       </el-col>
       <el-col :span="8">
-        <!-- <div id="other-properties" class="panel"></div> -->
         <div id="js-properties-panel" class="panel"></div>
       </el-col>
     </el-row>
@@ -17,7 +19,7 @@
 
 <script setup name="demo1">
 import { onMounted, defineExpose, ref, reactive } from 'vue'
-// import Modeler from 'bpmn-js/lib/Modeler'
+import Modeler from 'bpmn-js/lib/Modeler'
 // 自定义左侧工具栏
 import  CustomModeler from './palette/customModeler'
 import initDiagram from './diagram/initDiagram.bpmn'
@@ -45,8 +47,24 @@ import baseGeneralDescriptors from "./descriptors/general.json"
 import FormGroupProvider from './provider/FormGroupProvider'
 import TaskListenerProvider from './provider/TaskListenerProvider'
 import ExecutionListenerProvider from './provider/ExecutionListenerProvider'
+import TransavorInputProvider from './provider/TransavtorInputProvider'
 
-
+// 普通模式：
+//    工具栏：开始节点，结束节点，网关节点，UserTask节点
+//    属性面板：
+//             1、通用属性：名称、编码；-默认 
+//             2、基础配置：设置办理人 处理类型 界面配置；
+// 高级模式：
+//    工具栏：插件自带的全部
+//    属性面板： 1、通用属性：名称、编码； -默认
+//             2、基础配置：设置办理人 处理类型 界面配置；
+//             3、高级配置：
+              // 3.1办理人：手动输入
+              // 3.2任务监听器-完成
+              // 3.3执行监听器-完成
+              // 3.4外部表单-已有
+              // 3.5 外部调用-已有
+              // 3.6 状态流转-已有
 
 let bpmnModeler = null;
 const init = () => {
@@ -174,12 +192,120 @@ const exportFun = async () => {
   console.log('export---', xml)
 }
 
+let index = ref(0)
+// 普通模式
+const normalFun = () => {
+  index.value = 0;
+  bpmnModeler && bpmnModeler.destroy();
+  const dom = document.getElementById("container");
+  bpmnModeler = new CustomModeler({
+    container: dom,
+    //添加控制板
+    propertiesPanel: {
+      parent: '#js-properties-panel'
+    },
+    additionalModules: [
+      BpmnPropertiesPanelModule,
+      // 控制属性栏
+      BpmnPropertiesProviderModule,
+      // CamundaPlatformPropertiesProviderModule,
+      // CamundaExtensionModule,
+      // CloudElementTemplatesPropertiesProviderModule,
+      // CloudElementTemplatesValidator,
+      // ElementTemplatesPropertiesProviderModule,
+      // ZeebeDescriptionProvider,
+      // ZeebePropertiesProviderModule,
+      // useService,
+      // 汉化
+      customTranslateModule,
+    ],
+    moddleExtensions: {
+      camunda: camundaModdleDescriptors,
+      self: baseGeneralDescriptors,
+    }
+  });
+
+  console.log('bpmnModeler----', bpmnModeler)
+  // 让流程图自适应屏幕
+  const canvas = bpmnModeler.get("canvas");
+  canvas.zoom('fit-viewport')
+
+  bpmnModeler.importXML(initDiagram).then(() => {
+    addBpmnListener();
+    addModelerListener();
+    addElementListener();
+  }).catch(err => {
+    return console.error('failed to load diagram', err);
+  })
+}
+// 高级模式
+const advancedFun = () => {
+  index.value = 1;
+  bpmnModeler && bpmnModeler.destroy();
+  const dom = document.getElementById("container");
+  bpmnModeler = new Modeler({
+    container: dom,
+    //添加控制板
+    propertiesPanel: {
+      parent: '#js-properties-panel'
+    },
+    additionalModules: [
+      BpmnPropertiesPanelModule,
+      // 控制属性栏
+      BpmnPropertiesProviderModule,
+      // CamundaPlatformPropertiesProviderModule,
+      // CamundaExtensionModule,
+      // CloudElementTemplatesPropertiesProviderModule,
+      // CloudElementTemplatesValidator,
+      // ElementTemplatesPropertiesProviderModule,
+      // ZeebeDescriptionProvider,
+      // ZeebePropertiesProviderModule,
+      // useService,
+      // 汉化
+      customTranslateModule,
+      // 自定义属性
+      // 表单组
+      FormGroupProvider,
+      // 任务监听器
+      TaskListenerProvider,
+      // 执行监听器
+      ExecutionListenerProvider,
+      // 办理人
+      TransavorInputProvider
+    ],
+    moddleExtensions: {
+      camunda: camundaModdleDescriptors,
+      self: baseGeneralDescriptors,
+    }
+  });
+  // 让流程图自适应屏幕
+  const canvas = bpmnModeler.get("canvas");
+  canvas.zoom('fit-viewport')
+
+  console.log('bpmnModeler---', bpmnModeler, canvas)
+  // console.log("获取 BpmnPropertiesProviderModule：", bpmnModeler.get('eventBus'))
+
+  // const propertiesPanel = bpmnModeler.get('propertiesPanel');
+  // console.log('----propertiesPanel-----', propertiesPanel)
+  // propertiesPanel.attachTo('#other-properties');
+
+  bpmnModeler.importXML(initDiagram).then(() => {
+    addBpmnListener();
+    addModelerListener();
+    addElementListener();
+  }).catch(err => {
+    return console.error('failed to load diagram', err);
+  })
+}
+
 defineExpose({
   exportFun,
+  normalFun,
+  advancedFun
 })
 
 onMounted(() => {
-  init()
+  advancedFun()
 })
 
 </script>

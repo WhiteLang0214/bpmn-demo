@@ -8,24 +8,6 @@
   "associations": [],
   "types": [
     {
-      "name": "BewitchedStartEvent",
-      "extends": [
-        "bpmn:StartEvent"
-      ],
-      "properties": [
-        {
-          "name": "generalName",
-          "isAttr": true,
-          "type": "String"
-        },
-        {
-          "name": "extFormUrl",
-          "isAttr": true,
-          "type": "String"
-        }
-      ]
-    },
-    {
       "name": "dealType",
       "extends": [
         "bpmn:UserTask"
@@ -35,9 +17,17 @@
           "name": "user_type",
           "isAttr": true,
           "type": "String"
-        },
+        }
+      ]
+    },
+    {
+      "name": "customProvider_transavtor",
+      "extends": [
+        "bpmn:UserTask"
+      ],
+      "properties": [
         {
-          "name": "generalName",
+          "name": "transavtor_value",
           "isAttr": true,
           "type": "String"
         }
