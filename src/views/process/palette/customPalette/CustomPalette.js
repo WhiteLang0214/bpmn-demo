@@ -5,7 +5,7 @@
  * @Author: langxue
  * @Date: 2022-11-18 14:20:41
  * @LastEditors: langxue
- * @LastEditTime: 2022-11-22 14:11:14
+ * @LastEditTime: 2022-11-24 10:07:39
  */
 
 import {
@@ -167,16 +167,16 @@ PaletteProvider.prototype.getPaletteEntries = function (element) { // 此方法�
       'bpmn:ExclusiveGateway', 'gateway', 'bpmn-icon-gateway-none',
       translate('执行网关节点')
     ),
-    'create.task': createAction(
-      'bpmn:Task', 'activity', 'bpmn-icon-task',
-      translate('任务节点')
-    ),
+    // 'create.task': createAction(
+    //   'bpmn:Task', 'activity', 'bpmn-icon-task',
+    //   translate('任务节点')
+    // ),
     'create.user-task': createAction(
-      'bpmn:UserTask', 'activity', '',
+      'bpmn:UserTask', 'activity', 'bpmn-icon-task',
       translate('用户任务节点'),
-      {
-        imageUrl: 'http://testpi.leandc.cn/img/home.7c6af2bf.png'
-      }
+      // {
+      //   imageUrl: 'http://testpi.leandc.cn/img/home.7c6af2bf.png'
+      // }
     ),
     // 'create.data-object': createAction(
     //   'bpmn:DataObjectReference', 'data-object', 'bpmn-icon-data-object',
