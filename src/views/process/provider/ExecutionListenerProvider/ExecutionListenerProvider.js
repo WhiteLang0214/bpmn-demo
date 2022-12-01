@@ -5,7 +5,7 @@
  * @Author: langxue
  * @Date: 2022-11-23 14:37:55
  * @LastEditors: langxue
- * @LastEditTime: 2022-11-23 15:20:47
+ * @LastEditTime: 2022-11-28 15:10:54
  */
 const propertiesPanel = require('@bpmn-io/properties-panel');
 // const ModelingUtil = require('bpmn-js/lib/features/modeling/util/ModelingUtil');
@@ -34,10 +34,10 @@ const LISTENER_ALLOWED_TYPES = [
   'bpmn:UserTask'
 ];
 
-function ExecutionListenerGroup(element, injector) {
+export function ExecutionListenerGroup(element, injector) {
   const translate = injector.get('translate');
   const group = {
-    label: translate('Execution listeners'),
+    label: translate('执行监听器'),
     id: 'CamundaPlatform__ExecutionListener',
     component: propertiesPanel.ListGroup,
     ...ExecutionListenerProps({
@@ -135,3 +135,4 @@ export default class ExecutionListenerProvider {
 }
 
 ExecutionListenerProvider.$inject = [ 'propertiesPanel', 'injector'];
+
