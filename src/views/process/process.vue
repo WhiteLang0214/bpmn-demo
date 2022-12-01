@@ -49,6 +49,9 @@ import TaskListenerProvider from './provider/TaskListenerProvider'
 import ExecutionListenerProvider from './provider/ExecutionListenerProvider'
 import TransavorInputProvider from './provider/TransavtorInputProvider'
 
+// 自定义标题
+import CustomBaseTitleProvider from './provider/CustomBaseTitleProvider'
+
 // 普通模式：
 //    工具栏：开始节点，结束节点，网关节点，UserTask节点
 //    属性面板：
@@ -264,6 +267,7 @@ const advancedFun = () => {
       // 汉化
       customTranslateModule,
       // 自定义属性
+      CustomBaseTitleProvider('基础配置'),
       // 表单组
       FormGroupProvider,
       // 任务监听器
@@ -327,5 +331,13 @@ onMounted(() => {
 }
 .panel {
   height: 100%;
+}
+
+:deep(.customProvider-driver-header) {
+  font-weight: bold;
+  font-size: 16px;
+  line-height: 35px;
+  padding: 0 10px;
+  text-align: left;
 }
 </style>
