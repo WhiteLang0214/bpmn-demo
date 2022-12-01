@@ -5,7 +5,7 @@
  * @Author: langxue
  * @Date: 2022-11-23 14:37:55
  * @LastEditors: langxue
- * @LastEditTime: 2022-11-28 15:10:54
+ * @LastEditTime: 2022-12-01 14:16:17
  */
 const propertiesPanel = require('@bpmn-io/properties-panel');
 // const ModelingUtil = require('bpmn-js/lib/features/modeling/util/ModelingUtil');
@@ -135,4 +135,3 @@ export default class ExecutionListenerProvider {
 }
 
 ExecutionListenerProvider.$inject = [ 'propertiesPanel', 'injector'];
-
