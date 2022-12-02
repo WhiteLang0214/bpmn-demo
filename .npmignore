@@ -1,0 +1,8 @@
+node_modules/
+public/
+src/
+
+vue.config.js
+babel.config.js
+
+.env.*
