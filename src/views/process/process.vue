@@ -9,27 +9,30 @@
 -->
 <template>
   <div class="demo">
-    <ht-process id="container" style="height: 100%"></ht-process>
+    <h1>流程中的设置组件</h1>
+    <Setting />
+    <!-- <ht-process id="container" style="height: 100%"></ht-process> -->
   </div>
 </template>
 
-<script>
-
-
-export default {
-
-}
+<script setup>
+import { defineAsyncComponent } from "vue";
+const Setting = defineAsyncComponent(() =>
+  import(
+    "../Setting/index.vue"
+  )
+);
 </script>
 
 
 <style scoped>
 /* bpmn */
-@import '~bpmn-js/dist/assets/diagram-js.css';
-@import '~bpmn-js/dist/assets/bpmn-font/css/bpmn.css';
-@import '~bpmn-js/dist/assets/bpmn-font/css/bpmn-codes.css';
-@import '~bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css';
+@import "~bpmn-js/dist/assets/diagram-js.css";
+@import "~bpmn-js/dist/assets/bpmn-font/css/bpmn.css";
+@import "~bpmn-js/dist/assets/bpmn-font/css/bpmn-codes.css";
+@import "~bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css";
 /* 右边工具栏样式 */
-@import '~bpmn-js-properties-panel/dist/assets/properties-panel.css';
+@import "~bpmn-js-properties-panel/dist/assets/properties-panel.css";
 
 .demo {
   height: 100vh;

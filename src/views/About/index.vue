@@ -1,7 +1,6 @@
 <template>
   <div>
-    about
-    <h1>子组件：</h1>
+    <h1>关于中的设置组件：</h1>
     <Setting />
   </div>
 </template>
@@ -13,7 +12,7 @@ export default {
     Setting: defineAsyncComponent(() =>
       import(
         /* webpackPrefetch: true */
-        /* webpackChunkName: "Setting" */
+        /* webpackChunkName: "AboutSetting" */
         "../Setting/index.vue"
       )
     ),

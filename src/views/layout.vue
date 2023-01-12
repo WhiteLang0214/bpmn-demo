@@ -11,11 +11,6 @@
 </template>
 
 <script>
-const utils = import(
-  "../utils/index" 
-  /* webpackPrefetch: true */ 
-  /* webpackChunkName: "utils" */
-);
 export default {
   methods: {},
 };

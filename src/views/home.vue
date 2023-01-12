@@ -2,7 +2,7 @@
   <div>
     <el-button @click="goProcess">流程</el-button>
     <el-button @click="goAbout">关于</el-button>
-    <!-- <div>
+    <div>
       <h1>全屏组件测试</h1>
       <div ref="parentRef" class="fullscreenBox">
         <MetaFullscreen :parent="parentRef"></MetaFullscreen>
@@ -36,7 +36,7 @@
           :x="{ axisLabel: { color: '#fff' } }"
         />
       </MetaEchartsBox>
-    </div> -->
+    </div>
   </div>
 </template>
 

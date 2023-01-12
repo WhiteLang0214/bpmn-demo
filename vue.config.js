@@ -10,7 +10,7 @@ function resolvePath(dir) {
 }
 
 module.exports = {
-  productionSourceMap: true,
+  productionSourceMap: isDev,
   devServer: {},
   configureWebpack: {
     plugins: [],
@@ -37,6 +37,7 @@ module.exports = {
     config.plugins.delete('prefetch')
 
     // config.plugin('prefetch').tap(options => {
+    //   console.log('prefetch---', options)
     //   options[0].fileBlacklist = options[0].fileBlacklist || []
     //   options[0].fileBlacklist.push(/myasyncRoute(.)+?\.js$/)
     //   return options
@@ -57,8 +58,8 @@ module.exports = {
           test: /[\\/]node_modules[\\/]_?element-plus(.*)/ // in order to adapt to cnpm
         },
         commons: {
-          name: 'chunk-commons',
-          test: resolvePath('src/components'), // can customize your rules
+          name: 'chunk-AbrainPcComponent',
+          test: /[\\/]node_modules[\\/]_?abrain-web-component(.*)/, // can customize your rules
           priority: 30,
           reuseExistingChunk: true
         }
