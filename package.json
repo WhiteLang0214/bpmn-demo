@@ -9,7 +9,7 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "cross-env NODE_ENV=production vue-cli-service build",
-    "build:dev": "cross-env NODE_ENV=development vue-cli-service build --mode dev",
+    "build:dev": "cross-env NODE_ENV=dev vue-cli-service build --mode dev",
     "build:test": "cross-env NODE_ENV=k8s vue-cli-service build --mode k8s",
     "build:pre": "cross-env NODE_ENV=pre vue-cli-service build --mode pre",
     "build:lib": "vue-cli-service build --target lib --name HtComponent src/views/index.js",
@@ -24,8 +24,6 @@
     "camunda-bpmn-moddle": "4.5.0",
     "core-js": "^3.6.5",
     "element-plus": "^2.2.10",
-    "install": "^0.13.0",
-    "npm": "^9.2.0",
     "screenfull": "4.2.0",
     "vue": "^3.2.37",
     "vue-router": "4.0.12",
