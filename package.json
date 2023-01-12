@@ -1,5 +1,5 @@
 {
-  "name": "ht",
+  "name": "ht-component",
   "version": "0.0.7",
   "private": false,
   "description": "核桃组件库 - 基于vue3,bpmnjs的流程设计器",

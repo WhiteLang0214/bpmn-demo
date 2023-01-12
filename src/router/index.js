@@ -1,16 +1,29 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHashHistory } from 'vue-router';
+
+const Layout = import(/* webpackChunkName: "views" */ '../views/layout.vue');
+const Home = import(/* webpackChunkName: "views" */ '../views/home.vue');
+const About = import(/* webpackChunkName: "views" */ '../views/About/index.vue');
+const Process = import(/* webpackChunkName: "views" */ '../views/process/process.vue');
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory(),
   routes: [
     {
       path: "/",
-      redirect: "/process",
-      component: () => import("@/views/layout.vue"),
+      redirect: "/home",
+      component: Layout,
       children: [
         {
+          path: "/home",
+          component: Home
+        },
+        {
           path: "/process",
-          component: () => import("@/views/process/process.vue")
+          component: Process
+        },
+        {
+          path: "/about",
+          component: About
         }
       ]
     }

@@ -1,10 +1,9 @@
 <template>
   <div id="layout">
-    <!-- <header>header</header> -->
+    <header>header</header>
     <div class="container">
-      <!-- <div class="menu">menu</div> -->
+      <div class="menu">menu</div>
       <div class="content">
-        <!-- <el-button type="primary" @click="goTest">点我显示测试页面</el-button> -->
         <router-view />
       </div>
     </div>
@@ -12,15 +11,15 @@
 </template>
 
 <script>
+const utils = import(
+  "../utils/index" 
+  /* webpackPrefetch: true */ 
+  /* webpackChunkName: "utils" */
+);
 export default {
-  methods: {
-    goTest() {
-      this.$router.push("/test/demo1")
-    }
-  }
-}
+  methods: {},
+};
 </script>
 
 <style>
-
 </style>
