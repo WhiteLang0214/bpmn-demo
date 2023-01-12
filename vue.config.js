@@ -58,7 +58,7 @@ module.exports = {
         },
         commons: {
           name: 'chunk-commons',
-          test: resolve('src/components'), // can customize your rules
+          test: resolvePath('src/components'), // can customize your rules
           priority: 30,
           reuseExistingChunk: true
         }
