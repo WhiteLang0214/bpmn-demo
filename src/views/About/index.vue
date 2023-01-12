@@ -7,15 +7,18 @@
 </template>
 
 <script>
-
-import Setting from '../Setting/index.vue';
-
+import { defineAsyncComponent } from "vue";
 export default {
   components: {
-    Setting,
+    Setting: defineAsyncComponent(() =>
+      import(
+        /* webpackPrefetch: true */
+        /* webpackChunkName: "Setting" */
+        "../Setting/index.vue"
+      )
+    ),
   },
-  setup() {
-  }
+  setup() {},
 };
 </script>
 
